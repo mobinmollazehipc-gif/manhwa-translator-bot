@@ -1,0 +1,13 @@
+# Sensitive config & API keys
+config.json
+.env
+
+# Python cache & virtualenvs
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Logs & temp
+*.log
