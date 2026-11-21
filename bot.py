@@ -5,6 +5,19 @@ import io
 import time
 import re
 import zipfile
+
+# Ensure stdout/stderr exist when running headlessly via pythonw
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bot_runtime.log")
+if sys.stdout is None:
+    try:
+        sys.stdout = open(LOG_FILE, "a", encoding="utf-8")
+    except Exception:
+        sys.stdout = io.StringIO()
+if sys.stderr is None:
+    try:
+        sys.stderr = open(LOG_FILE, "a", encoding="utf-8")
+    except Exception:
+        sys.stderr = io.StringIO()
 from PIL import Image
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -505,7 +518,9 @@ def handle_text(message):
     except Exception as e:
         bot.reply_to(message, f"❌ خطا:\n{str(e)}")
 
-# --- Cloud Health Check Server (Render / Koyeb / Railway Web Service) ---
+import socket
+
+# --- Cloud Health Check Server (Alwaysdata / Render / Koyeb Web Service) ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -523,21 +538,27 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         # Mute normal health ping logs
         pass
 
-def start_health_check_server(port):
+def start_health_check_server(host, port):
     try:
-        server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-        print(f"🌐 Cloud Health Check server listening on port {port}")
+        if ":" in host:
+            class V6Server(HTTPServer):
+                address_family = socket.AF_INET6
+            server = V6Server((host, port), HealthCheckHandler)
+        else:
+            server = HTTPServer((host, port), HealthCheckHandler)
+        print(f"🌐 Cloud Health Check server listening on [{host}]:{port}")
         server.serve_forever()
     except Exception as e:
         print(f"Health server error: {e}")
 
 if __name__ == '__main__':
-    # If running on cloud platform (Render/Koyeb sets PORT)
+    # If running on cloud platform (Alwaysdata sets IP/PORT, Render sets PORT)
     cloud_port = os.environ.get("PORT")
+    cloud_host = os.environ.get("IP", "::" if cloud_port else "0.0.0.0")
     if cloud_port:
         try:
             p = int(cloud_port)
-            threading.Thread(target=start_health_check_server, args=(p,), daemon=True).start()
+            threading.Thread(target=start_health_check_server, args=(cloud_host, p), daemon=True).start()
         except Exception as e:
             print(f"Could not parse PORT: {e}")
 
