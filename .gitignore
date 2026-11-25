@@ -1,5 +1,6 @@
-# Sensitive config & API keys
+# Sensitive config, state & API keys
 config.json
+bot_state.json
 .env
 
 # Python cache & virtualenvs
@@ -9,5 +10,9 @@ __pycache__/
 venv/
 .venv/
 
-# Logs & temp
+# Logs, local launchers & temp
 *.log
+*.log.*
+create_shortcut.vbs
+start_bot_background.vbs
+مدیریت_ربات.bat
